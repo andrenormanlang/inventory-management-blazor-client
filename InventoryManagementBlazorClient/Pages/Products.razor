@@ -69,26 +69,29 @@ else if (products != null)
                     <!-- Add/Edit Product Form -->
                     <EditForm Model="@selectedProduct" OnValidSubmit="HandleValidSubmit">
                         <DataAnnotationsValidator />
-                        <ValidationSummary />
 
                         <div class="mb-3">
                             <label class="form-label">Name:</label>
                             <InputText class="form-control" @bind-Value="selectedProduct.Name" />
+                            <ValidationMessage For="@(() => selectedProduct.Name)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Description:</label>
                             <InputTextArea class="form-control" @bind-Value="selectedProduct.Description" />
+                            <ValidationMessage For="@(() => selectedProduct.Description)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Price:</label>
                             <InputNumber class="form-control" @bind-Value="selectedProduct.Price" />
+                            <ValidationMessage For="@(() => selectedProduct.Price)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Quantity:</label>
                             <InputNumber class="form-control" @bind-Value="selectedProduct.Quantity" />
+                            <ValidationMessage For="@(() => selectedProduct.Quantity)" />
                         </div>
 
                         <!-- Category Dropdown -->
@@ -100,6 +103,7 @@ else if (products != null)
                                     <option value="@category.CategoryId">@category.Name</option>
                                 }
                             </select>
+                            <ValidationMessage For="@(() => selectedProduct.CategoryId)" />
                         </div>
 
                         <!-- Supplier Dropdown -->
@@ -111,6 +115,7 @@ else if (products != null)
                                     <option value="@supplier.Id">@supplier.Name</option>
                                 }
                             </select>
+                            <ValidationMessage For="@(() => selectedProduct.SupplierId)" />
                         </div>
 
                         <button type="submit" class="btn btn-primary">@ButtonLabel</button>
