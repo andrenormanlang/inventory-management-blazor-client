@@ -1,0 +1,46 @@
+﻿@page "/supplier-detail/{SupplierId:int}"
+@inject InventoryManagementBlazorClient.Services.SupplierService supplierService
+@inject NavigationManager NavigationManager
+@using InventoryManagementBlazorClient.Models
+
+
+@if (supplier == null)
+{
+    <p><em>Loading supplier details...</em></p>
+}
+else
+{
+    <div class="container mt-3">
+        <h3>Supplier Details: @supplier.Name</h3>
+        <div>
+            <strong>Address:</strong> @supplier.Address
+            <br>
+            <strong>Phone:</strong> @supplier.Phone
+            <h4>Products Supplied:</h4>
+            <ul>
+                @foreach (var product in supplier.Products)
+                {
+                    <li>@product.Name - @product.Price.ToString("C")</li>
+                }
+            </ul>
+        </div>
+        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int SupplierId { get; set; }
+
+    private Supplier? supplier;
+
+    protected override async Task OnInitializedAsync()
+    {
+        supplier = await supplierService.GetSupplierByIdAsync(SupplierId);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/suppliers");
+    }
+}

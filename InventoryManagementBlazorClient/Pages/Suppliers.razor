@@ -1,26 +1,30 @@
-﻿@page "/supplier"
+﻿@page "/suppliers"
 @layout MainLayout
 @inject InventoryManagementBlazorClient.Services.SupplierService supplierService
+@inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
-<h3>Suppliers</h3>
+<h3>Suppliers List</h3>
 
-@if (suppliers == null)
+@if (isLoading)
 {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
+    <p><em>Loading...</em></p>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
     </div>
 }
-else
+else if (suppliers != null && suppliers.Count > 0)
 {
     <table class="table table-striped table-bordered">
         <thead class="thead-dark">
             <tr>
-                <th scope="col">Supplier Name</th>
-                <th scope="col">Address</th>
-                <th scope="col">Phone</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -30,17 +34,44 @@ else
                     <td>@supplier.Name</td>
                     <td>@supplier.Address</td>
                     <td>@supplier.Phone</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => NavigateToSupplierDetail(supplier.Id)">
+                            Details
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 }
+else
+{
+    <div class="alert alert-info">No suppliers found.</div>
+}
 
 @code {
     private List<Supplier>? suppliers;
+    private bool isLoading = true;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        suppliers = await supplierService.GetSuppliersAsync();
+        try
+        {
+            suppliers = await supplierService.GetSuppliersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load suppliers: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToSupplierDetail(int supplierId)
+    {
+        NavigationManager.NavigateTo($"/supplier-detail/{supplierId}");
     }
 }

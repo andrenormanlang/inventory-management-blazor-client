@@ -3,21 +3,45 @@
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
+
 @if (category == null)
 {
     <p><em>Loading category details...</em></p>
 }
 else
 {
-    <div class="container">
-        <h4>@category.Name</h4>
-        <ul>
-            @foreach (var product in category.Products)
-            {
-                <li>@product.Name - @product.Price.ToString("C")</li>
-            }
-        </ul>
-        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>@category.Name</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in category.Products)
+                                {
+                                    <tr>
+                                        <td>@product.Name</td>
+                                        <td>@product.Price.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -34,6 +58,6 @@ else
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/categories");  // Adjust the URL as needed for your categories list page
+        NavigationManager.NavigateTo("/categories");
     }
 }

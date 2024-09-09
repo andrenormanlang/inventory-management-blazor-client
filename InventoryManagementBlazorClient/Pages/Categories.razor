@@ -8,7 +8,7 @@
 
 <style>
     .category-name {
-        max-width: 50px; /* Adjust the max-width as needed */
+        max-width: 40px; /* Adjust the max-width as needed */
     }
 
     .product-count {
@@ -43,8 +43,8 @@ else if (categories != null && categories.Count > 0)
             @foreach (var category in categories)
             {
                 <tr @onclick="@(() => NavigateToCategoryDetail(category.CategoryId))">
-                    <td class="category-name">@category.Name</td>
-                    <td class="product-count text-center">@category.Products?.Count</td>
+                    <td >@category.Name</td>
+                    <td >@category.Products?.Count</td>
                 </tr>
             }
         </tbody>
