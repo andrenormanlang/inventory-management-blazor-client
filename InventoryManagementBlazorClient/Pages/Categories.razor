@@ -1,17 +1,28 @@
 ﻿@page "/categories"
 @layout MainLayout
 @inject InventoryManagementBlazorClient.Services.CategoryService categoryService
+@inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
-<h3>Categories</h3>
+<h3>Categories List</h3>
+
+<style>
+    .category-name {
+        max-width: 50px; /* Adjust the max-width as needed */
+    }
+
+    .product-count {
+        max-width: 100px; /* Adjust the max-width as needed */
+    }
+
+    .text-center {
+        text-align: center;
+    }
+</style>
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border text-primary" role="status">
-            <p><em>Loading...</em></p>
-        </div>
-    </div>
+    <p><em>Loading...</em></p>
 }
 else if (errorMessage != null)
 {
@@ -24,16 +35,16 @@ else if (categories != null && categories.Count > 0)
     <table class="table table-striped table-bordered">
         <thead class="thead-dark">
             <tr>
-                <th scope="col">Category Name</th>
-                <th scope="col">Number of Products</th>
+                <th scope="col" class="category-name">Category Name</th>
+                <th scope="col" class="product-count text-center">Number of Products</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var category in categories)
             {
-                <tr>
-                    <td>@category.Name</td>
-                    <td>@category.Products?.Count ?? 0</td>
+                <tr @onclick="@(() => NavigateToCategoryDetail(category.CategoryId))">
+                    <td class="category-name">@category.Name</td>
+                    <td class="product-count text-center">@category.Products?.Count</td>
                 </tr>
             }
         </tbody>
@@ -63,5 +74,10 @@ else
         {
             isLoading = false;
         }
+    }
+
+    private void NavigateToCategoryDetail(int categoryId)
+    {
+        NavigationManager.NavigateTo($"/category-detail/{categoryId}");
     }
 }

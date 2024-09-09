@@ -1,0 +1,39 @@
+﻿@page "/category-detail/{CategoryId:int}"
+@inject InventoryManagementBlazorClient.Services.CategoryService categoryService
+@inject NavigationManager NavigationManager
+@using InventoryManagementBlazorClient.Models
+
+@if (category == null)
+{
+    <p><em>Loading category details...</em></p>
+}
+else
+{
+    <div class="container">
+        <h4>@category.Name</h4>
+        <ul>
+            @foreach (var product in category.Products)
+            {
+                <li>@product.Name - @product.Price.ToString("C")</li>
+            }
+        </ul>
+        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int CategoryId { get; set; }
+
+    private Category? category;
+
+    protected override async Task OnInitializedAsync()
+    {
+        category = await categoryService.GetCategoryByIdAsync(CategoryId);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/categories");  // Adjust the URL as needed for your categories list page
+    }
+}
