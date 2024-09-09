@@ -1,0 +1,79 @@
+﻿@page "/product-detail/{ProductId:int}"
+@inject InventoryManagementBlazorClient.Services.ProductService productService
+@inject NavigationManager NavigationManager
+@using InventoryManagementBlazorClient.Models
+
+<h3>Product Detail</h3>
+
+@if (product == null)
+{
+    <p><em>Loading product details...</em></p>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>@product.Name</h4>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Price:</strong> @product.Price.ToString("C")</p>
+                        <p><strong>Quantity:</strong> @product.Quantity</p>
+                        <p><strong>Category:</strong> @product.CategoryName</p>
+                        <p><strong>Supplier:</strong> @product.SupplierName</p>
+                        <p><strong>Description:</strong> @product.Description</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int? ProductId { get; set; }
+
+    private Product? product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ProductId.HasValue)
+        {
+            Console.WriteLine($"Attempting to load product details for Product ID: {ProductId}");
+            try
+            {
+                product = await productService.GetProductByIdAsync(ProductId.Value);
+                if (product != null)
+                {
+                    Console.WriteLine("Product details loaded successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Product not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while fetching product details: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Product ID is not specified.");
+        }
+    }
+
+    private void GoBack()
+    {
+        Console.WriteLine("Navigating back to product list.");
+        NavigationManager.NavigateTo("/products");
+    }
+}
+
+
+

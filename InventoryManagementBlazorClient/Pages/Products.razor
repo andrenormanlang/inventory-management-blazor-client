@@ -1,6 +1,7 @@
 ﻿@page "/products"
 @layout MainLayout
 @inject InventoryManagementBlazorClient.Services.ProductService productService
+@inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 @using System.Net.Http
 
@@ -31,7 +32,7 @@ else if (products != null)
         <tbody>
             @foreach (var product in products)
             {
-                <tr>
+                <tr @onclick="@(() => ViewDetails(product.ProductId))">
                     <td>@product.Name</td>
                     <td>@product.Price.ToString("C")</td>
                     <td>@product.Quantity</td>
@@ -50,9 +51,11 @@ else if (products != null)
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("Initializing Product List Page...");
         try
         {
             products = await productService.GetProductsAsync();
+            Console.WriteLine("Products loaded successfully.");
         }
         catch (HttpRequestException e)
         {
@@ -68,5 +71,11 @@ else if (products != null)
         {
             isLoading = false;
         }
+    }
+
+    private void ViewDetails(int productId)
+    {
+        Console.WriteLine($"Navigating to product details for Product ID: {productId}");
+        NavigationManager.NavigateTo($"/product-detail/{productId}");
     }
 }
