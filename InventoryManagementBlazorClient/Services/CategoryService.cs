@@ -14,32 +14,32 @@ namespace InventoryManagementBlazorClient.Services
 
         public async Task<List<Category>> GetCategoriesAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<Category>>("categories");
+            return await _httpClient.GetFromJsonAsync<List<Category>>("category");
         }
 
         public async Task<Category> GetCategoryByIdAsync(int categoryId)
         {
-            return await _httpClient.GetFromJsonAsync<Category>($"categories/{categoryId}");
+            return await _httpClient.GetFromJsonAsync<Category>($"category/{categoryId}");
         }
 
         public async Task<HttpResponseMessage> CreateCategoryAsync(Category category)
         {
-            return await _httpClient.PostAsJsonAsync("categories", category);
+            return await _httpClient.PostAsJsonAsync("category", category);
         }
 
         public async Task<HttpResponseMessage> UpdateCategoryAsync(int categoryId, Category category)
         {
-            return await _httpClient.PutAsJsonAsync($"categories/{categoryId}", category);
+            return await _httpClient.PutAsJsonAsync($"category/{categoryId}", category);
         }
 
         public async Task<HttpResponseMessage> DeleteCategoryAsync(int categoryId)
         {
-            return await _httpClient.DeleteAsync($"categories/{categoryId}");
+            return await _httpClient.DeleteAsync($"category/{categoryId}");
         }
 
         public async Task<HttpResponseMessage> CreateCategoriesBulkAsync(IEnumerable<Category> categories)
         {
-            return await _httpClient.PostAsJsonAsync("categories/bulk", categories);
+            return await _httpClient.PostAsJsonAsync("category/bulk", categories);
         }
     }
 }

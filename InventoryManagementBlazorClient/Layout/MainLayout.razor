@@ -1,16 +1,44 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<!-- Always Mobile Bootstrap Navbar with Blazor Toggle -->
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Inventory Management</a>
+        <button class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="@NavMenuCssClass navbar-collapse  me-auto mb-2 mb-lg-0 justify-content-center w-100">
+            <ul class="navbar-nav me-auto d-flex flex-column align-items-center justify-content-center">
+                <li class="nav-item">
+                    <NavLink class="nav-link text-uppercase" href="/" Match="NavLinkMatch.All">Home</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link text-uppercase" href="/products">Products</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link text-uppercase" href="/categories">Categories</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link text-uppercase" href="/suppliers">Suppliers</NavLink>
+                </li>
+            </ul>
         </div>
+    </div>
+</nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+<!-- Page content -->
+<div class="container mt-4">
+    @Body
 </div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    // Toggle the nav menu state
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
