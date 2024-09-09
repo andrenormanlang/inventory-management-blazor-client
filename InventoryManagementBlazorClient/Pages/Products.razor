@@ -1,0 +1,72 @@
+﻿@page "/products"
+@layout MainLayout
+@inject InventoryManagementBlazorClient.Services.ProductService productService
+@using InventoryManagementBlazorClient.Models
+@using System.Net.Http
+
+<h3>Product List</h3>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+else if (products != null)
+{
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Product Name</th>
+                <th scope="col">Price</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Category</th>
+                <th scope="col">Supplier</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Price.ToString("C")</td>
+                    <td>@product.Quantity</td>
+                    <td>@product.CategoryName</td>
+                    <td>@product.SupplierName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Product>? products;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = await productService.GetProductsAsync();
+        }
+        catch (HttpRequestException e)
+        {
+            errorMessage = $"Error fetching products: {e.Message}";
+            Console.WriteLine($"HTTP request error: {e}");
+        }
+        catch (Exception e)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine($"Unexpected error: {e}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

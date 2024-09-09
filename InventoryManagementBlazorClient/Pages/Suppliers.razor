@@ -1,0 +1,46 @@
+﻿@page "/supplier"
+@layout MainLayout
+@inject InventoryManagementBlazorClient.Services.SupplierService supplierService
+@using InventoryManagementBlazorClient.Models
+
+<h3>Suppliers</h3>
+
+@if (suppliers == null)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Supplier Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">Phone</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var supplier in suppliers)
+            {
+                <tr>
+                    <td>@supplier.Name</td>
+                    <td>@supplier.Address</td>
+                    <td>@supplier.Phone</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Supplier>? suppliers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        suppliers = await supplierService.GetSuppliersAsync();
+    }
+}
