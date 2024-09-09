@@ -55,18 +55,18 @@ else if (products != null)
     </table>
 }
 
-<!-- Modal for both Edit Product and Confirm Delete -->
-<div class="modal" tabindex="-1" style="display:@(showModal ? "block" : "none")">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@ModalTitle</h5>
-                <button type="button" class="btn-close" @onclick="CloseModal"></button>
-            </div>
-            <div class="modal-body">
-                @if (isEditMode)
-                {
-                    <!-- Edit Product Form -->
+<!-- Modal for Add/Edit Product -->
+@if (showModal && isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ModalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add/Edit Product Form -->
                     <EditForm Model="@selectedProduct" OnValidSubmit="HandleValidSubmit">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
@@ -113,30 +113,36 @@ else if (products != null)
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn btn-primary">@ButtonLabel</button>
                     </EditForm>
-                }
-                else
-                {
-                    <!-- Delete Confirmation -->
-                    <p>Are you sure you want to delete this product?</p>
-                    <p><strong>@selectedProduct.Name</strong></p>
-                }
-            </div>
-            <div class="modal-footer">
-                @if (isEditMode)
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                }
-                else
-                {
-                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                }
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+<!-- Modal for Confirm Delete -->
+@if (showModal && !isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Product</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Delete Confirmation -->
+                    <p>Are you sure you want to delete the product <strong>@selectedProduct.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<Product>? products;
@@ -148,7 +154,9 @@ else if (products != null)
     private bool showModal = false;
     private string? errorMessage;
     private bool isEditMode = true;
-    private string ModalTitle => isEditMode ? "Edit Product" : "Delete Product";
+
+    private string ModalTitle => isEditMode ? (selectedProduct.ProductId == 0 ? "Add Product" : "Edit Product") : "Delete Product";
+    private string ButtonLabel => selectedProduct.ProductId == 0 ? "Add Product" : "Save Changes";
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,22 +193,30 @@ else if (products != null)
 
     private void OpenAddProductModal()
     {
-        selectedProduct = new ProductDto();  // Reset form for new product
-        isEditMode = true;
+        selectedProduct = new ProductDto
+            {
+                Name = string.Empty,
+                Description = string.Empty,
+                Price = 0,
+                Quantity = 0,
+                CategoryId = 0,
+                SupplierId = 0
+            };
+        isEditMode = true;  // We are editing (adding a new product)
         showModal = true;
     }
 
     private void OpenEditProductModal(Product product)
     {
         selectedProduct = MapProductToDto(product);
-        isEditMode = true;
+        isEditMode = true;  // We are editing
         showModal = true;
     }
 
     private void OpenDeleteProductModal(Product product)
     {
         selectedProduct = MapProductToDto(product);
-        isEditMode = false;
+        isEditMode = false;  // We are deleting, so we don't need the form
         showModal = true;
     }
 
@@ -225,6 +241,7 @@ else if (products != null)
         {
             response = await productService.UpdateProductAsync(selectedProduct.ProductId, new Product
                 {
+                    ProductId = selectedProduct.ProductId,
                     Name = selectedProduct.Name,
                     Description = selectedProduct.Description,
                     Price = selectedProduct.Price,
@@ -264,3 +281,6 @@ else if (products != null)
         NavigationManager.NavigateTo($"/product-detail/{productId}");
     }
 }
+
+
+
