@@ -3,7 +3,6 @@
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
-
 @if (supplier == null)
 {
     <p><em>Loading supplier details...</em></p>
@@ -11,20 +10,43 @@
 else
 {
     <div class="container mt-3">
-        <h3>Supplier Details: @supplier.Name</h3>
-        <div>
-            <strong>Address:</strong> @supplier.Address
-            <br>
-            <strong>Phone:</strong> @supplier.Phone
-            <h4>Products Supplied:</h4>
-            <ul>
-                @foreach (var product in supplier.Products)
+        <div class="card">
+            <div class="card-header">
+                <h3>@supplier.Name</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Address:</strong> @supplier.Address</p>
+                <p><strong>Phone:</strong> @supplier.Phone</p>
+                <h4>Products Supplied:</h4>
+                @if (supplier.Products.Any())
                 {
-                    <li>@product.Name - @product.Price.ToString("C")</li>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in supplier.Products)
+                            {
+                                <tr>
+                                    <td>@product.Name</td>
+                                    <td>@product.Price.ToString("C")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
-            </ul>
+                else
+                {
+                    <p>No products supplied by this supplier.</p>
+                }
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+            </div>
         </div>
-        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
     </div>
 }
 

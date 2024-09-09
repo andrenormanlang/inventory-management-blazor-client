@@ -8,11 +8,11 @@
 
 <style>
     .category-name {
-        max-width: 40px; /* Adjust the max-width as needed */
+        max-width: 100px; /* Adjust the max-width as needed */
     }
 
     .product-count {
-        max-width: 100px; /* Adjust the max-width as needed */
+        max-width: 30px; /* Adjust the max-width as needed */
     }
 
     .text-center {
@@ -43,8 +43,8 @@ else if (categories != null && categories.Count > 0)
             @foreach (var category in categories)
             {
                 <tr @onclick="@(() => NavigateToCategoryDetail(category.CategoryId))">
-                    <td >@category.Name</td>
-                    <td >@category.Products?.Count</td>
+                    <td class="category-name">@category.Name</td>
+                    <td class="product-count text-center">@category.Products?.Count</td>
                 </tr>
             }
         </tbody>

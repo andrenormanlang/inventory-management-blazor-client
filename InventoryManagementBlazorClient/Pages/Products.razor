@@ -1,11 +1,18 @@
 ﻿@page "/products"
 @layout MainLayout
 @inject InventoryManagementBlazorClient.Services.ProductService productService
+@inject InventoryManagementBlazorClient.Services.CategoryService categoryService
+@inject InventoryManagementBlazorClient.Services.SupplierService supplierService
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
+@using InventoryManagementBlazorClient.Dtos
 @using System.Net.Http
 
-<h3>Product List</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Product List</h3>
+    <button class="btn btn-success" @onclick="OpenAddProductModal">Add New Product</button>
+</div>
+
 
 @if (isLoading)
 {
@@ -44,28 +51,89 @@ else if (products != null)
     </table>
 }
 
+<!-- Modal Form Here -->
+<div class="modal" tabindex="-1" style="display:@(showModal ? "block" : "none")">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Product</h5>
+                <button type="button" class="btn-close" @onclick="CloseAddProductModal"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@newProduct" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name:</label>
+                        <InputText class="form-control" @bind-Value="newProduct.Name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description:</label>
+                        <InputTextArea class="form-control" @bind-Value="newProduct.Description" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Price:</label>
+                        <InputNumber class="form-control" @bind-Value="newProduct.Price" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quantity:</label>
+                        <InputNumber class="form-control" @bind-Value="newProduct.Quantity" />
+                    </div>
+
+                    <!-- Category Dropdown -->
+                    <div class="mb-3">
+                        <label class="form-label">Category:</label>
+                        <select class="form-control" @bind="newProduct.CategoryId">
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.CategoryId">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Supplier Dropdown -->
+                    <div class="mb-3">
+                        <label class="form-label">Supplier:</label>
+                        <select class="form-control" @bind="newProduct.SupplierId">
+                            @foreach (var supplier in suppliers)
+                            {
+                                <option value="@supplier.Id">@supplier.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     private List<Product>? products;
+    private ProductDto newProduct = new ProductDto();
+    private List<Category>? categories;
+    private List<Supplier>? suppliers;
     private bool isLoading = true;
+    private bool showModal = false;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("Initializing Product List Page...");
+        isLoading = true;
         try
         {
             products = await productService.GetProductsAsync();
-            Console.WriteLine("Products loaded successfully.");
+            categories = await categoryService.GetCategoriesAsync();
+            suppliers = await supplierService.GetSuppliersAsync();
         }
-        catch (HttpRequestException e)
+        catch (Exception ex)
         {
-            errorMessage = $"Error fetching products: {e.Message}";
-            Console.WriteLine($"HTTP request error: {e}");
-        }
-        catch (Exception e)
-        {
-            errorMessage = "An unexpected error occurred.";
-            Console.WriteLine($"Unexpected error: {e}");
+            errorMessage = $"Failed to load data: {ex.Message}";
         }
         finally
         {
@@ -73,9 +141,34 @@ else if (products != null)
         }
     }
 
+    private void OpenAddProductModal() => showModal = true;
+    private void CloseAddProductModal() => showModal = false;
+
+    private async Task HandleValidSubmit()
+    {
+        HttpResponseMessage response = await productService.CreateProductAsync(new Product
+        {
+            Name = newProduct.Name,
+            Description = newProduct.Description,
+            Price = newProduct.Price,
+            Quantity = newProduct.Quantity,
+            CategoryId = newProduct.CategoryId,
+            SupplierId = newProduct.SupplierId
+        });
+        if (response.IsSuccessStatusCode)
+        {
+            CloseAddProductModal();
+            newProduct = new ProductDto(); // Reset the form for next use
+            products = await productService.GetProductsAsync(); // Refresh the list
+        }
+        else
+        {
+            errorMessage = "Failed to add the product. Please try again.";
+        }
+    }
+
     private void ViewDetails(int productId)
     {
-        Console.WriteLine($"Navigating to product details for Product ID: {productId}");
         NavigationManager.NavigateTo($"/product-detail/{productId}");
     }
 }
