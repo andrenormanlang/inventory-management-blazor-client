@@ -3,7 +3,6 @@
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
-<h3>Product Detail</h3>
 
 @if (product == null)
 {
@@ -19,11 +18,11 @@ else
                         <h4>@product.Name</h4>
                     </div>
                     <div class="card-body">
-                        <p><strong>Price:</strong> @product.Price.ToString("C")</p>
+                        <p><strong>Description:</strong> @product.Description</p>
                         <p><strong>Quantity:</strong> @product.Quantity</p>
                         <p><strong>Category:</strong> @product.CategoryName</p>
                         <p><strong>Supplier:</strong> @product.SupplierName</p>
-                        <p><strong>Description:</strong> @product.Description</p>
+                        <p><strong>Price:</strong> @product.Price.ToString("C")</p>
                     </div>
                     <div class="card-footer">
                         <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
