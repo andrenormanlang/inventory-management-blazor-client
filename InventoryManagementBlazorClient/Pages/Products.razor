@@ -13,7 +13,6 @@
     <button class="btn btn-success" @onclick="OpenAddProductModal">Add New Product</button>
 </div>
 
-
 @if (isLoading)
 {
     <p><em>Loading...</em></p>
@@ -34,80 +33,106 @@ else if (products != null)
                 <th scope="col">Quantity</th>
                 <th scope="col">Category</th>
                 <th scope="col">Supplier</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var product in products)
             {
-                <tr @onclick="@(() => ViewDetails(product.ProductId))">
+                <tr>
                     <td>@product.Name</td>
                     <td>@product.Price.ToString("C")</td>
                     <td>@product.Quantity</td>
                     <td>@product.CategoryName</td>
                     <td>@product.SupplierName</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditProductModal(product)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => OpenDeleteProductModal(product)">Delete</button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 }
 
-<!-- Modal Form Here -->
+<!-- Modal for both Edit Product and Confirm Delete -->
 <div class="modal" tabindex="-1" style="display:@(showModal ? "block" : "none")">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add New Product</h5>
-                <button type="button" class="btn-close" @onclick="CloseAddProductModal"></button>
+                <h5 class="modal-title">@ModalTitle</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body">
-                <EditForm Model="@newProduct" OnValidSubmit="HandleValidSubmit">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+                @if (isEditMode)
+                {
+                    <!-- Edit Product Form -->
+                    <EditForm Model="@selectedProduct" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
-                    <div class="mb-3">
-                        <label class="form-label">Name:</label>
-                        <InputText class="form-control" @bind-Value="newProduct.Name" />
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Name:</label>
+                            <InputText class="form-control" @bind-Value="selectedProduct.Name" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Description:</label>
-                        <InputTextArea class="form-control" @bind-Value="newProduct.Description" />
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description:</label>
+                            <InputTextArea class="form-control" @bind-Value="selectedProduct.Description" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Price:</label>
-                        <InputNumber class="form-control" @bind-Value="newProduct.Price" />
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price:</label>
+                            <InputNumber class="form-control" @bind-Value="selectedProduct.Price" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Quantity:</label>
-                        <InputNumber class="form-control" @bind-Value="newProduct.Quantity" />
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quantity:</label>
+                            <InputNumber class="form-control" @bind-Value="selectedProduct.Quantity" />
+                        </div>
 
-                    <!-- Category Dropdown -->
-                    <div class="mb-3">
-                        <label class="form-label">Category:</label>
-                        <select class="form-control" @bind="newProduct.CategoryId">
-                            @foreach (var category in categories)
-                            {
-                                <option value="@category.CategoryId">@category.Name</option>
-                            }
-                        </select>
-                    </div>
+                        <!-- Category Dropdown -->
+                        <div class="mb-3">
+                            <label class="form-label">Category:</label>
+                            <select class="form-control" @bind="selectedProduct.CategoryId">
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.CategoryId">@category.Name</option>
+                                }
+                            </select>
+                        </div>
 
-                    <!-- Supplier Dropdown -->
-                    <div class="mb-3">
-                        <label class="form-label">Supplier:</label>
-                        <select class="form-control" @bind="newProduct.SupplierId">
-                            @foreach (var supplier in suppliers)
-                            {
-                                <option value="@supplier.Id">@supplier.Name</option>
-                            }
-                        </select>
-                    </div>
+                        <!-- Supplier Dropdown -->
+                        <div class="mb-3">
+                            <label class="form-label">Supplier:</label>
+                            <select class="form-control" @bind="selectedProduct.SupplierId">
+                                @foreach (var supplier in suppliers)
+                                {
+                                    <option value="@supplier.Id">@supplier.Name</option>
+                                }
+                            </select>
+                        </div>
 
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </EditForm>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </EditForm>
+                }
+                else
+                {
+                    <!-- Delete Confirmation -->
+                    <p>Are you sure you want to delete this product?</p>
+                    <p><strong>@selectedProduct.Name</strong></p>
+                }
+            </div>
+            <div class="modal-footer">
+                @if (isEditMode)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                }
             </div>
         </div>
     </div>
@@ -116,11 +141,14 @@ else if (products != null)
 @code {
     private List<Product>? products;
     private ProductDto newProduct = new ProductDto();
+    private ProductDto selectedProduct = new ProductDto();
     private List<Category>? categories;
     private List<Supplier>? suppliers;
     private bool isLoading = true;
     private bool showModal = false;
     private string? errorMessage;
+    private bool isEditMode = true;
+    private string ModalTitle => isEditMode ? "Edit Product" : "Delete Product";
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,29 +169,93 @@ else if (products != null)
         }
     }
 
-    private void OpenAddProductModal() => showModal = true;
-    private void CloseAddProductModal() => showModal = false;
+    private ProductDto MapProductToDto(Product product)
+    {
+        return new ProductDto
+            {
+                ProductId = product.ProductId,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Quantity = product.Quantity,
+                CategoryId = product.CategoryId,
+                SupplierId = product.SupplierId
+            };
+    }
+
+    private void OpenAddProductModal()
+    {
+        selectedProduct = new ProductDto();  // Reset form for new product
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenEditProductModal(Product product)
+    {
+        selectedProduct = MapProductToDto(product);
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenDeleteProductModal(Product product)
+    {
+        selectedProduct = MapProductToDto(product);
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
 
     private async Task HandleValidSubmit()
     {
-        HttpResponseMessage response = await productService.CreateProductAsync(new Product
+        HttpResponseMessage response;
+        if (selectedProduct.ProductId == 0) // New product
         {
-            Name = newProduct.Name,
-            Description = newProduct.Description,
-            Price = newProduct.Price,
-            Quantity = newProduct.Quantity,
-            CategoryId = newProduct.CategoryId,
-            SupplierId = newProduct.SupplierId
-        });
+            response = await productService.CreateProductAsync(new Product
+                {
+                    Name = selectedProduct.Name,
+                    Description = selectedProduct.Description,
+                    Price = selectedProduct.Price,
+                    Quantity = selectedProduct.Quantity,
+                    CategoryId = selectedProduct.CategoryId,
+                    SupplierId = selectedProduct.SupplierId
+                });
+        }
+        else // Edit existing product
+        {
+            response = await productService.UpdateProductAsync(selectedProduct.ProductId, new Product
+                {
+                    Name = selectedProduct.Name,
+                    Description = selectedProduct.Description,
+                    Price = selectedProduct.Price,
+                    Quantity = selectedProduct.Quantity,
+                    CategoryId = selectedProduct.CategoryId,
+                    SupplierId = selectedProduct.SupplierId
+                });
+        }
+
         if (response.IsSuccessStatusCode)
         {
-            CloseAddProductModal();
-            newProduct = new ProductDto(); // Reset the form for next use
+            CloseModal();
             products = await productService.GetProductsAsync(); // Refresh the list
         }
         else
         {
-            errorMessage = "Failed to add the product. Please try again.";
+            errorMessage = "Failed to save the product. Please try again.";
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        HttpResponseMessage response = await productService.DeleteProductAsync(selectedProduct.ProductId);
+        if (response.IsSuccessStatusCode)
+        {
+            CloseModal();
+            products = await productService.GetProductsAsync(); // Refresh the list
+        }
+        else
+        {
+            errorMessage = "Failed to delete the product. Please try again.";
         }
     }
 
