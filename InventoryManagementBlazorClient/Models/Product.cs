@@ -17,8 +17,9 @@ public class Product
     public int SupplierId { get; set; }
     public Supplier? Supplier { get; set; }  // Optional Supplier
 
-    // Additional fields for category and supplier names
+    // Fields populated when retrieving data
     public string? CategoryName { get; set; }
     public string? SupplierName { get; set; }
 }
+
 

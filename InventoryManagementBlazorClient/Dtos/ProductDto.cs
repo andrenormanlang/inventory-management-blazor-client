@@ -12,7 +12,7 @@ namespace InventoryManagementBlazorClient.Dtos
         public string Name { get; set; }
 
         [Required(ErrorMessage = "Product description is required.")]
-        [StringLength(500, ErrorMessage = "Description cannot be longer than 500 characters.")]
+        [StringLength(2000, ErrorMessage = "Description cannot be longer than 2000 characters.")]
         [MinLength(50, ErrorMessage = "Description must be at least 50 characters.")]
         public string Description { get; set; }
 
@@ -22,13 +22,11 @@ namespace InventoryManagementBlazorClient.Dtos
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
 
-        [Required(ErrorMessage = "Category is required.")]
-        public string? CategoryName { get; set; }
+        // Ensure these two fields are only used for submission
+        [Range(1, int.MaxValue, ErrorMessage = "Category is required.")]
         public int CategoryId { get; set; }
 
-        [Required(ErrorMessage = "Supplier is required.")]
-        public string? SupplierName { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Supplier is required.")]
         public int SupplierId { get; set; }
     }
 }
-

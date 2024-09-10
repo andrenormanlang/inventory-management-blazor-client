@@ -56,6 +56,7 @@ else if (products != null)
 }
 
 <!-- Modal for Add/Edit Product -->
+<!-- Modal for Add/Edit Product -->
 @if (showModal && isEditMode)
 {
     <div class="modal" tabindex="-1" style="display: block">
@@ -67,8 +68,9 @@ else if (products != null)
                 </div>
                 <div class="modal-body">
                     <!-- Add/Edit Product Form -->
-                    <EditForm Model="@selectedProduct" OnValidSubmit="HandleValidSubmit">
+                    <EditForm Model="@selectedProduct" OnSubmit="HandleSubmit">
                         <DataAnnotationsValidator />
+                        <ValidationSummary />
 
                         <div class="mb-3">
                             <label class="form-label">Name:</label>
@@ -98,6 +100,7 @@ else if (products != null)
                         <div class="mb-3">
                             <label class="form-label">Category:</label>
                             <select class="form-control" @bind="selectedProduct.CategoryId">
+                                <option value="0">Select a Category</option> <!-- Default unselected option -->
                                 @foreach (var category in categories)
                                 {
                                     <option value="@category.CategoryId">@category.Name</option>
@@ -110,6 +113,7 @@ else if (products != null)
                         <div class="mb-3">
                             <label class="form-label">Supplier:</label>
                             <select class="form-control" @bind="selectedProduct.SupplierId">
+                                <option value="0">Select a Supplier</option> <!-- Default unselected option -->
                                 @foreach (var supplier in suppliers)
                                 {
                                     <option value="@supplier.Id">@supplier.Name</option>
@@ -118,6 +122,7 @@ else if (products != null)
                             <ValidationMessage For="@(() => selectedProduct.SupplierId)" />
                         </div>
 
+
                         <button type="submit" class="btn btn-primary">@ButtonLabel</button>
                     </EditForm>
                 </div>
@@ -125,6 +130,7 @@ else if (products != null)
         </div>
     </div>
 }
+
 
 <!-- Modal for Confirm Delete -->
 @if (showModal && !isEditMode)
@@ -200,10 +206,11 @@ else if (products != null)
     {
         selectedProduct = new ProductDto
             {
+                ProductId = 0,  // Ensure ProductId is set to 0 for new product
                 Name = string.Empty,
                 Description = string.Empty,
                 Price = 0,
-                Quantity = 0,
+                Quantity = 1,
                 CategoryId = 0,
                 SupplierId = 0
             };
@@ -228,9 +235,20 @@ else if (products != null)
 
     private void CloseModal() => showModal = false;
 
+    private async Task HandleSubmit(EditContext editContext)
+    {
+        if (editContext.Validate())  // Manually validate the form
+        {
+            await HandleValidSubmit();  // Proceed if the form is valid
+        }
+        else
+        {
+            Console.WriteLine("Validation failed.");
+        }
+    }
+
     private async Task HandleValidSubmit()
     {
-        Console.WriteLine("Form Submitted");
         HttpResponseMessage response;
         if (selectedProduct.ProductId == 0) // New product
         {
