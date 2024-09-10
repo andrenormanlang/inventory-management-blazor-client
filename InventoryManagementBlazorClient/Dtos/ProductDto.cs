@@ -12,7 +12,7 @@ namespace InventoryManagementBlazorClient.Dtos
         public string Name { get; set; }
 
         [Required(ErrorMessage = "Product description is required.")]
-        [StringLength(2000, ErrorMessage = "Description cannot be longer than 2000 characters.")]
+        [StringLength(10000, ErrorMessage = "Description cannot be longer than 10000 characters.")]
         [MinLength(50, ErrorMessage = "Description must be at least 50 characters.")]
         public string Description { get; set; }
 

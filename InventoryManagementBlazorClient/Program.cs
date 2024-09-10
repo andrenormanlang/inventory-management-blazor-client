@@ -13,6 +13,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https:/
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<SupplierService>();
+builder.Services.AddBlazorBootstrap();
 
 
 await builder.Build().RunAsync();

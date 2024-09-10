@@ -8,6 +8,17 @@
 @using InventoryManagementBlazorClient.Dtos
 @using System.Net.Http
 
+<style>
+    /* Add hover effect to the product rows */
+    table tbody tr:hover {
+        background-color: #f2f2f2;
+        cursor: pointer;
+    }
+
+
+
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Product List</h3>
     <button class="btn btn-success" @onclick="OpenAddProductModal">Add New Product</button>
@@ -40,19 +51,26 @@ else if (products != null)
             @foreach (var product in products)
             {
                 <tr>
-                    <td>@product.Name</td>
+                    <td><a href="javascript:void(0)" @onclick="() => ViewDetails(product.ProductId)">@product.Name</a></td>
                     <td>@product.Price.ToString("C")</td>
                     <td>@product.Quantity</td>
                     <td>@product.CategoryName</td>
                     <td>@product.SupplierName</td>
                     <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditProductModal(product)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => OpenDeleteProductModal(product)">Delete</button>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditProductModal(product)">
+                            <Icon CustomIconName=" bi-pencil"></Icon>
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => OpenDeleteProductModal(product)">
+                            <Icon CustomIconName="bi bi-trash"></Icon>
+                        </button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+
+
 }
 
 <!-- Modal for Add/Edit Product -->
