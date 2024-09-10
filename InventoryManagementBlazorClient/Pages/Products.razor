@@ -209,6 +209,7 @@ else if (products != null)
             };
         isEditMode = true;  // We are editing (adding a new product)
         showModal = true;
+        Console.WriteLine("Add Product Modal Opened");
     }
 
     private void OpenEditProductModal(Product product)
@@ -229,6 +230,7 @@ else if (products != null)
 
     private async Task HandleValidSubmit()
     {
+        Console.WriteLine("Form Submitted");
         HttpResponseMessage response;
         if (selectedProduct.ProductId == 0) // New product
         {
