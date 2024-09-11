@@ -6,7 +6,9 @@
 
 @if (product == null)
 {
-    <p><em>Loading product details...</em></p>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+        <Spinner Type="SpinnerType.Grow" Color="SpinnerColor.Light" />
+    </div>
 }
 else
 {
@@ -18,7 +20,8 @@ else
                         <h4>@product.Name</h4>
                     </div>
                     <div class="card-body">
-                        <p><strong>Description:</strong> @product.Description</p>
+                        <p><strong>Description:</strong></p>
+                        <div class="mb-4">@product.Description</div>
                         <p><strong>Quantity:</strong> @product.Quantity</p>
                         <p><strong>Category:</strong> @product.CategoryName</p>
                         <p><strong>Supplier:</strong> @product.SupplierName</p>

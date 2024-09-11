@@ -3,17 +3,15 @@
 <!-- Always Mobile Bootstrap Navbar with Blazor Toggle -->
 <nav class="navbar navbar-dark bg-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Inventory Management</a>
+        <a class="navbar-brand" href="/">📦Inventory Management🏷️🗂️</a>
         <button class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="@NavMenuCssClass navbar-collapse me-auto mb-2 mb-lg-0 justify-content-center w-100">
             <ul class="navbar-nav me-auto d-flex flex-column align-items-center justify-content-center">
+                
                 <li class="nav-item">
-                    <NavLink class="nav-link text-uppercase" href="/" Match="NavLinkMatch.All">Home</NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link text-uppercase" href="/products">Products</NavLink>
+                    <NavLink class="nav-link text-uppercase" href="/">Products</NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-link text-uppercase" href="/categories">Categories</NavLink>

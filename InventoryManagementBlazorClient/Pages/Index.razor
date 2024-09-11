@@ -1,7 +1,467 @@
 ﻿@page "/"
+@inject InventoryManagementBlazorClient.Services.ProductService productService
+@inject InventoryManagementBlazorClient.Services.CategoryService categoryService
+@inject InventoryManagementBlazorClient.Services.SupplierService supplierService
+@inject NavigationManager NavigationManager
+@using InventoryManagementBlazorClient.Models
+@using InventoryManagementBlazorClient.Dtos
+@using System.Net.Http
 
-<PageTitle>Home</PageTitle>
+<style>
+    /* Add hover effect to the product rows */
+    table-hover tbody tr:hover {
+        background-color: #f2f2f2;
+        cursor: pointer;
+    }
+</style>
 
-<h1>Welcome to Inventory Management System</h1>
-<p>This is your one-stop solution to manage products, categories, and suppliers.</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Product List</h3>
+    <button class="btn btn-success" @onclick="OpenAddProductModal">Add New Product</button>
+</div>
+
+<!-- Filter Section -->
+<div class="mb-4">
+    <div class="row">
+        <!-- Filter by Category -->
+        <div class="col-md-2">
+            <label class="mb-1"><strong>Filter by Category</strong></label>
+            <select class="form-control" @bind="SelectedCategoryId">
+                <option value="0">All Categories</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.CategoryId">@category.Name</option>
+                }
+            </select>
+        </div>
+
+        <!-- Filter by Supplier -->
+        <div class="col-md-2">
+            <label class="mb-1"><strong>Filter by Supplier</strong></label>
+            <select class="form-control" @bind="SelectedSupplierId">
+                <option value="0">All Suppliers</option>
+                @foreach (var supplier in suppliers)
+                {
+                    <option value="@supplier.Id">@supplier.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+        <Spinner Type="SpinnerType.Grow" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+else if (filteredProducts != null)
+{
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Product Name</th>
+                <th scope="col">Price</th>
+                <th scope="col" class="text-center">Quantity</th>
+                <th scope="col">Category</th>
+                <th scope="col">Supplier</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in filteredProducts)
+            {
+                <tr>
+                    <td><a href="javascript:void(0)" @onclick="() => ViewDetails(product.ProductId)">@product.Name</a></td>
+                    <td>@product.Price.ToString("C")</td>
+                    <td class="text-center">@product.Quantity</td>
+                    <td><a href="javascript:void(0)" @onclick="() => OpenCategoryModal(product.CategoryId)">@product.CategoryName</a></td>
+                    <td><a href="javascript:void(0)" @onclick="() => OpenSupplierModal(product.SupplierId)">@product.SupplierName</a></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditProductModal(product)">
+                            <Icon CustomIconName="bi bi-pencil"></Icon>
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => OpenDeleteProductModal(product)">
+                            <Icon CustomIconName="bi bi-trash"></Icon>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Modal for Add/Edit Product -->
+@if (showModal && isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ModalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@selectedProduct" OnSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Name:</label>
+                            <InputText class="form-control" @bind-Value="selectedProduct.Name" />
+                            <ValidationMessage For="@(() => selectedProduct.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description:</label>
+                            <InputTextArea class="form-control" @bind-Value="selectedProduct.Description" />
+                            <ValidationMessage For="@(() => selectedProduct.Description)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Price:</label>
+                            <InputNumber class="form-control" @bind-Value="selectedProduct.Price" />
+                            <ValidationMessage For="@(() => selectedProduct.Price)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity:</label>
+                            <InputNumber class="form-control" @bind-Value="selectedProduct.Quantity" />
+                            <ValidationMessage For="@(() => selectedProduct.Quantity)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category:</label>
+                            <select class="form-control" @bind="selectedProduct.CategoryId">
+                                <option value="0">Select a Category</option>
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.CategoryId">@category.Name</option>
+                                }
+                            </select>
+                            <ValidationMessage For="@(() => selectedProduct.CategoryId)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Supplier:</label>
+                            <select class="form-control" @bind="selectedProduct.SupplierId">
+                                <option value="0">Select a Supplier</option>
+                                @foreach (var supplier in suppliers)
+                                {
+                                    <option value="@supplier.Id">@supplier.Name</option>
+                                }
+                            </select>
+                            <ValidationMessage For="@(() => selectedProduct.SupplierId)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">@ButtonLabel</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal for Confirm Delete -->
+@if (showModal && !isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Product</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the product <strong>@selectedProduct.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal for Category Details -->
+@if (showCategoryModal && selectedCategory != null)
+{
+    <div class="modal fade show" tabindex="-1" style="display:block" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedCategory.Name - Category Details</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Category ID:</strong> @selectedCategory.CategoryId</p>
+                    <p><strong>Total Products in Category:</strong> @selectedCategory.Products.Count</p> <!-- Display the total number of products -->
+                    <h5>Products:</h5>
+                    <ul>
+                        @foreach (var product in selectedCategory.Products)
+                        {
+                            <li>@product.Name - @product.Price.ToString("C")</li> <!-- List each product with name and price -->
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+<!-- Modal for Supplier Details -->
+@if (showSupplierModal && selectedSupplier != null)
+{
+    <div class="modal fade show" tabindex="-1" style="display:block" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedSupplier.Name - Supplier Details</h5>
+                    <button type="button" class="btn-close" @onclick="CloseSupplierModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Supplier ID:</strong> @selectedSupplier.Id</p>
+                    <p><strong>Address:</strong> @selectedSupplier.Address</p>
+                    <p><strong>Phone:</strong> @selectedSupplier.Phone</p>
+                    <p><strong>Total Products Supplied:</strong> @selectedSupplier.Products.Count</p> <!-- Display the total products -->
+                    <h5>Products:</h5>
+                    <ul>
+                        @foreach (var product in selectedSupplier.Products)
+                        {
+                            <li>@product.Name - @product.Price.ToString("C")</li> <!-- List each product with name and price -->
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<Product>? products;
+    private List<Product>? filteredProducts;
+    private ProductDto newProduct = new ProductDto();
+    private ProductDto selectedProduct = new ProductDto();
+    private List<Category>? categories;
+    private List<Supplier>? suppliers;
+    private Category? selectedCategory;
+    private Supplier? selectedSupplier;
+    private bool isLoading = true;
+    private bool showModal = false;
+    private bool showCategoryModal = false;
+    private bool showSupplierModal = false;
+    private string? errorMessage;
+    private bool isEditMode = true;
+    private int selectedCategoryId = 0;
+    private int selectedSupplierId = 0;
+
+    private string ModalTitle => isEditMode ? (selectedProduct.ProductId == 0 ? "Add Product" : "Edit Product") : "Delete Product";
+    private string ButtonLabel => selectedProduct.ProductId == 0 ? "Add Product" : "Save Changes";
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            products = await productService.GetProductsAsync();
+            categories = await categoryService.GetCategoriesAsync();
+            suppliers = await supplierService.GetSuppliersAsync();
+            filteredProducts = products;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenAddProductModal()
+    {
+        selectedProduct = new ProductDto
+        {
+            ProductId = 0,
+            Name = string.Empty,
+            Description = string.Empty,
+            Price = 0,
+            Quantity = 1,
+            CategoryId = 0,
+            SupplierId = 0
+        };
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenEditProductModal(Product product)
+    {
+        selectedProduct = MapProductToDto(product);
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenDeleteProductModal(Product product)
+    {
+        selectedProduct = MapProductToDto(product);
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private ProductDto MapProductToDto(Product product)
+    {
+        return new ProductDto
+        {
+            ProductId = product.ProductId,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Quantity = product.Quantity,
+            CategoryId = product.CategoryId,
+            SupplierId = product.SupplierId
+        };
+    }
+
+    private async Task HandleSubmit(EditContext editContext)
+    {
+        if (editContext.Validate())
+        {
+            await HandleValidSubmit();
+        }
+        else
+        {
+            Console.WriteLine("Validation failed.");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        HttpResponseMessage response;
+        if (selectedProduct.ProductId == 0)
+        {
+            response = await productService.CreateProductAsync(new Product
+            {
+                Name = selectedProduct.Name,
+                Description = selectedProduct.Description,
+                Price = selectedProduct.Price,
+                Quantity = selectedProduct.Quantity,
+                CategoryId = selectedProduct.CategoryId,
+                SupplierId = selectedProduct.SupplierId
+            });
+        }
+        else
+        {
+            response = await productService.UpdateProductAsync(selectedProduct.ProductId, new Product
+            {
+                ProductId = selectedProduct.ProductId,
+                Name = selectedProduct.Name,
+                Description = selectedProduct.Description,
+                Price = selectedProduct.Price,
+                Quantity = selectedProduct.Quantity,
+                CategoryId = selectedProduct.CategoryId,
+                SupplierId = selectedProduct.SupplierId
+            });
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            CloseModal();
+            products = await productService.GetProductsAsync();
+            filteredProducts = products;
+        }
+        else
+        {
+            errorMessage = "Failed to save the product. Please try again.";
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        HttpResponseMessage response = await productService.DeleteProductAsync(selectedProduct.ProductId);
+        if (response.IsSuccessStatusCode)
+        {
+            CloseModal();
+            products = await productService.GetProductsAsync();
+            filteredProducts = products;
+        }
+        else
+        {
+            errorMessage = "Failed to delete the product. Please try again.";
+        }
+    }
+
+    private async Task OpenCategoryModal(int categoryId)
+    {
+        selectedCategory = await categoryService.GetCategoryByIdAsync(categoryId);
+        showCategoryModal = true;
+    }
+
+    private async Task OpenSupplierModal(int supplierId)
+    {
+        selectedSupplier = await supplierService.GetSupplierByIdAsync(supplierId);
+        showSupplierModal = true;
+    }
+
+    private void CloseCategoryModal()
+    {
+        showCategoryModal = false;
+        selectedCategory = null;
+    }
+
+    private void CloseSupplierModal()
+    {
+        showSupplierModal = false;
+        selectedSupplier = null;
+    }
+
+    private int SelectedCategoryId
+    {
+        get => selectedCategoryId;
+        set
+        {
+            if (selectedCategoryId != value)
+            {
+                selectedCategoryId = value;
+                FilterProducts();  // Trigger filtering when category changes
+            }
+        }
+    }
+
+    private int SelectedSupplierId
+    {
+        get => selectedSupplierId;
+        set
+        {
+            if (selectedSupplierId != value)
+            {
+                selectedSupplierId = value;
+                FilterProducts();  // Trigger filtering when supplier changes
+            }
+        }
+    }
+
+    private void FilterProducts()
+    {
+        filteredProducts = products.Where(p =>
+            (selectedCategoryId == 0 || p.CategoryId == selectedCategoryId) &&
+            (selectedSupplierId == 0 || p.SupplierId == selectedSupplierId)).ToList();
+    }
+
+
+    private void ViewDetails(int productId)
+    {
+        NavigationManager.NavigateTo($"/product-detail/{productId}");
+    }
+}
 

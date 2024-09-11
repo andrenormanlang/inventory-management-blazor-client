@@ -1,55 +1,104 @@
 ﻿@page "/category-detail/{CategoryId:int}"
 @inject InventoryManagementBlazorClient.Services.CategoryService categoryService
+@inject InventoryManagementBlazorClient.Services.ProductService productService
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
 
-
 @if (category == null)
 {
-    <p><em>Loading category details...</em></p>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+        <Spinner Type="SpinnerType.Grow" Color="SpinnerColor.Warning" />
+    </div>
 }
 else
 {
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4>@category.Name</h4>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-hover">
-                            <thead>
+    <div class="container mt-3">
+        <div class="card">
+            <div class="card-header">
+                <h3>@category.Name</h3>
+            </div>
+            <div class="card-body">
+                <h4>Products in this Category:</h4>
+
+                @if (category.Products.Any())
+                {
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in category.Products)
+                            {
                                 <tr>
-                                    <th>Product Name</th>
-                                    <th>Price</th>
+                                    <td>
+                                        <a href="javascript:void(0)" @onclick="() => OpenProductModal(product.ProductId)">
+                                            @product.Name
+                                        </a>
+                                    </td>
+                                    <td>@product.Price.ToString("C")</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var product in category.Products)
-                                {
-                                    <tr>
-                                        <td>@product.Name</td>
-                                        <td>@product.Price.ToString("C")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="alert alert-info">No products in this category.</div>
+                }
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Product Details -->
+    @if (showModal && selectedProduct != null)
+    {
+        <div class="modal fade show @modalClass" tabindex="-1" style="display:block" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@selectedProduct.Name - Details</h5>
+                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
-                    <div class="card-footer">
-                        <button class="btn btn-secondary" @onclick="GoBack">Go Back to List</button>
+                    <div class="modal-body">
+                        <p><strong>Description:</strong></p>
+                        <div class="mb-4">@selectedProduct.Description</div>
+                        <p><strong>Price:</strong> @selectedProduct.Price.ToString("C")</p>
+                        <p><strong>Quantity:</strong> @selectedProduct.Quantity</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 }
+
+<style>
+    .fade {
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+        .fade.show {
+            opacity: 1;
+        }
+</style>
 
 @code {
     [Parameter]
     public int CategoryId { get; set; }
 
     private Category? category;
+    private Product? selectedProduct; // To hold the selected product for modal display
+    private bool showModal = false;
+    private string modalClass = "fade"; // Adds fade effect class
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,5 +108,21 @@ else
     private void GoBack()
     {
         NavigationManager.NavigateTo("/categories");
+    }
+
+    // Open the modal with product details
+    private async Task OpenProductModal(int productId)
+    {
+        selectedProduct = await productService.GetProductByIdAsync(productId);
+        modalClass = "fade show";
+        showModal = true;
+    }
+
+    // Close the modal
+    private void CloseModal()
+    {
+        modalClass = "fade"; // Reset the modal class to apply fade-out effect
+        showModal = false;
+        selectedProduct = null;
     }
 }

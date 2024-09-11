@@ -3,26 +3,40 @@
 @inject InventoryManagementBlazorClient.Services.CategoryService categoryService
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
-
-<h3>Categories List</h3>
+@using InventoryManagementBlazorClient.Dtos
 
 <style>
-    .category-name {
-        max-width: 100px; /* Adjust the max-width as needed */
+    /* Add hover effect to the category rows */
+    table tbody tr:hover {
+        background-color: #f2f2f2;
+        cursor: pointer;
     }
 
-    .product-count {
-        max-width: 30px; /* Adjust the max-width as needed */
+    /* Reduce the width of the Number of Products and Actions columns */
+    .product-count-column, .actions-column {
+        width: 150px; /* Adjust the width as needed */
     }
 
+    /* Center the text and buttons */
     .text-center {
         text-align: center;
     }
+
+    .actions-column .btn {
+        margin: 0 auto; /* Center buttons in the action column */
+    }
 </style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Categories List</h3>
+    <button class="btn btn-success" @onclick="OpenAddCategoryModal">Add New Category</button>
+</div>
 
 @if (isLoading)
 {
-    <p><em>Loading...</em></p>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+        <Spinner Type="SpinnerType.Grow" Color="SpinnerColor.Success" Size="SpinnerSize.Large" />
+    </div>
 }
 else if (errorMessage != null)
 {
@@ -32,19 +46,28 @@ else if (errorMessage != null)
 }
 else if (categories != null && categories.Count > 0)
 {
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered table-hover">
         <thead class="thead-dark">
             <tr>
-                <th scope="col" class="category-name">Category Name</th>
-                <th scope="col" class="product-count text-center">Number of Products</th>
+                <th scope="col">Category Name</th>
+                <th scope="col" class="product-count-column text-center">Number of Products</th>
+                <th scope="col" class="actions-column text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var category in categories)
             {
-                <tr @onclick="@(() => NavigateToCategoryDetail(category.CategoryId))">
-                    <td class="category-name">@category.Name</td>
-                    <td class="product-count text-center">@category.Products?.Count</td>
+                <tr @onclick="() => NavigateToCategoryDetail(category.CategoryId)">
+                    <td>@category.Name</td>
+                    <td class="text-center">@category.Products.Count</td>
+                    <td class="actions-column text-center">
+                        <button class="btn btn-primary btn-sm" @onclick:stopPropagation="true" @onclick="() => OpenEditCategoryModal(category)">
+                            <Icon CustomIconName="bi bi-pencil"></Icon>
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick:stopPropagation="true" @onclick="() => OpenDeleteCategoryModal(category)">
+                            <Icon CustomIconName="bi bi-trash"></Icon>
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -55,13 +78,71 @@ else
     <div class="alert alert-info">No categories found.</div>
 }
 
+<!-- Modal for Add/Edit Category -->
+@if (showModal && isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ModalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@selectedCategory" OnSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="Name">Name:</label>
+                            <InputText id="Name" class="form-control" @bind-Value="selectedCategory.Name" />
+                            <ValidationMessage For="@(() => selectedCategory.Name)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">@ButtonLabel</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal for Confirm Delete -->
+@if (showModal && !isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Category</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the category <strong>@selectedCategory.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Category>? categories;
+    private CategoryDto selectedCategory = new CategoryDto();
     private bool isLoading = true;
+    private bool showModal = false;
     private string? errorMessage;
+    private bool isEditMode = true;
+
+    private string ModalTitle => isEditMode ? (selectedCategory.CategoryId == 0 ? "Add Category" : "Edit Category") : "Delete Category";
+    private string ButtonLabel => selectedCategory.CategoryId == 0 ? "Add Category" : "Save Changes";
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         try
         {
             categories = await categoryService.GetCategoriesAsync();
@@ -76,8 +157,88 @@ else
         }
     }
 
+    private void OpenAddCategoryModal()
+    {
+        selectedCategory = new CategoryDto(); // Clear form for new category
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenEditCategoryModal(Category category)
+    {
+        selectedCategory = MapCategoryToDto(category); // Map data to DTO for editing
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenDeleteCategoryModal(Category category)
+    {
+        selectedCategory = MapCategoryToDto(category); // Map data for deletion
+        isEditMode = false;
+        showModal = true;
+    }
+
     private void NavigateToCategoryDetail(int categoryId)
     {
         NavigationManager.NavigateTo($"/category-detail/{categoryId}");
     }
+
+    private CategoryDto MapCategoryToDto(Category category)
+    {
+        return new CategoryDto
+            {
+                CategoryId = category.CategoryId,
+                Name = category.Name
+            };
+    }
+
+    private async Task HandleSubmit()
+    {
+        HttpResponseMessage response;
+        if (selectedCategory.CategoryId == 0)
+        {
+            // Create new category
+            response = await categoryService.CreateCategoryAsync(MapDtoToCategory(selectedCategory));
+        }
+        else
+        {
+            // Update existing category
+            response = await categoryService.UpdateCategoryAsync(selectedCategory.CategoryId, MapDtoToCategory(selectedCategory));
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            categories = await categoryService.GetCategoriesAsync(); // Reload list
+            CloseModal();
+        }
+        else
+        {
+            errorMessage = "Failed to save the category.";
+        }
+    }
+
+    private Category MapDtoToCategory(CategoryDto dto)
+    {
+        return new Category
+            {
+                CategoryId = dto.CategoryId,
+                Name = dto.Name
+            };
+    }
+
+    private async Task ConfirmDelete()
+    {
+        HttpResponseMessage response = await categoryService.DeleteCategoryAsync(selectedCategory.CategoryId);
+        if (response.IsSuccessStatusCode)
+        {
+            categories = await categoryService.GetCategoriesAsync(); // Reload list
+            CloseModal();
+        }
+        else
+        {
+            errorMessage = "Failed to delete the category.";
+        }
+    }
+
+    private void CloseModal() => showModal = false;
 }

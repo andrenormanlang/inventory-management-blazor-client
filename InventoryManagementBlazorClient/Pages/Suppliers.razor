@@ -3,12 +3,26 @@
 @inject InventoryManagementBlazorClient.Services.SupplierService supplierService
 @inject NavigationManager NavigationManager
 @using InventoryManagementBlazorClient.Models
+@using InventoryManagementBlazorClient.Dtos
 
-<h3>Suppliers List</h3>
+<style>
+    /* Add hover effect to the supplier rows */
+    table-hover tbody tr:hover {
+        background-color: #A22076 !important;
+        cursor: pointer;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Suppliers List</h3>
+    <button class="btn btn-success" @onclick="OpenAddSupplierModal">Add New Supplier</button>
+</div>
 
 @if (isLoading)
 {
-    <p><em>Loading...</em></p>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+        <Spinner Type="SpinnerType.Grow" Color="SpinnerColor.Dark" Size="SpinnerSize.Large" />
+    </div>
 }
 else if (errorMessage != null)
 {
@@ -18,13 +32,13 @@ else if (errorMessage != null)
 }
 else if (suppliers != null && suppliers.Count > 0)
 {
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordere table-hover">
         <thead class="thead-dark">
             <tr>
                 <th>Name</th>
                 <th>Address</th>
                 <th>Phone</th>
-                <th>Actions</th>
+                <th class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -34,9 +48,15 @@ else if (suppliers != null && suppliers.Count > 0)
                     <td>@supplier.Name</td>
                     <td>@supplier.Address</td>
                     <td>@supplier.Phone</td>
-                    <td>
-                        <button class="btn btn-primary" @onclick="() => NavigateToSupplierDetail(supplier.Id)">
-                            Details
+                    <td class="text-center">
+                        <button class="btn btn-warning btn-sm" @onclick="() => NavigateToSupplierDetail(supplier.Id)">
+                            <Icon CustomIconName="bi bi-eye"></Icon>
+                        </button>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditSupplierModal(supplier)">
+                            <Icon CustomIconName="bi bi-pencil"></Icon>
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => OpenDeleteSupplierModal(supplier)">
+                            <Icon CustomIconName="bi bi-trash"></Icon>
                         </button>
                     </td>
                 </tr>
@@ -49,13 +69,83 @@ else
     <div class="alert alert-info">No suppliers found.</div>
 }
 
+<!-- Modal for Add/Edit Supplier -->
+@if (showModal && isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ModalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@selectedSupplierDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="Name">Name:</label>
+                            <InputText id="Name" class="form-control" @bind-Value="selectedSupplierDto.Name" />
+                            <ValidationMessage For="@(() => selectedSupplierDto.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Address">Address:</label>
+                            <InputText id="Address" class="form-control" @bind-Value="selectedSupplierDto.Address" />
+                            <ValidationMessage For="@(() => selectedSupplierDto.Address)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Phone">Phone:</label>
+                            <InputText id="Phone" class="form-control" @bind-Value="selectedSupplierDto.Phone" />
+                            <ValidationMessage For="@(() => selectedSupplierDto.Phone)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">@ButtonLabel</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal for Confirm Delete -->
+@if (showModal && !isEditMode)
+{
+    <div class="modal" tabindex="-1" style="display: block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Supplier</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the supplier <strong>@selectedSupplierDto.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Confirm Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Supplier>? suppliers;
+    private SupplierDto selectedSupplierDto = new SupplierDto();
     private bool isLoading = true;
+    private bool showModal = false;
     private string? errorMessage;
+    private bool isEditMode = true;
+
+    private string ModalTitle => isEditMode ? (selectedSupplierDto.Id == 0 ? "Add Supplier" : "Edit Supplier") : "Delete Supplier";
+    private string ButtonLabel => selectedSupplierDto.Id == 0 ? "Add Supplier" : "Save Changes";
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         try
         {
             suppliers = await supplierService.GetSuppliersAsync();
@@ -69,6 +159,90 @@ else
             isLoading = false;
         }
     }
+
+    private void OpenAddSupplierModal()
+    {
+        selectedSupplierDto = new SupplierDto(); // Clear form for new supplier
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenEditSupplierModal(Supplier supplier)
+    {
+        selectedSupplierDto = MapSupplierToDto(supplier); // Map data to DTO for editing
+        isEditMode = true;
+        showModal = true;
+    }
+
+    private void OpenDeleteSupplierModal(Supplier supplier)
+    {
+        selectedSupplierDto = MapSupplierToDto(supplier); // Map data for deletion
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private SupplierDto MapSupplierToDto(Supplier supplier)
+    {
+        return new SupplierDto
+            {
+                Id = supplier.Id,
+                Name = supplier.Name,
+                Address = supplier.Address,
+                Phone = supplier.Phone
+            };
+    }
+
+    private async Task HandleSubmit()
+    {
+        HttpResponseMessage response;
+        if (selectedSupplierDto.Id == 0)
+        {
+            // Create new supplier
+            response = await supplierService.CreateSupplierAsync(MapDtoToSupplier(selectedSupplierDto));
+        }
+        else
+        {
+            // Update existing supplier
+            response = await supplierService.UpdateSupplierAsync(selectedSupplierDto.Id, MapDtoToSupplier(selectedSupplierDto));
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            suppliers = await supplierService.GetSuppliersAsync(); // Reload list
+            CloseModal();
+        }
+        else
+        {
+            errorMessage = "Failed to save the supplier.";
+        }
+    }
+
+    private Supplier MapDtoToSupplier(SupplierDto dto)
+    {
+        return new Supplier
+            {
+                Id = dto.Id,
+                Name = dto.Name,
+                Address = dto.Address,
+                Phone = dto.Phone
+            };
+    }
+
+    private async Task ConfirmDelete()
+    {
+        HttpResponseMessage response = await supplierService.DeleteSupplierAsync(selectedSupplierDto.Id);
+        if (response.IsSuccessStatusCode)
+        {
+            suppliers = await supplierService.GetSuppliersAsync(); // Reload list
+            CloseModal();
+        }
+        else
+        {
+            errorMessage = "Failed to delete the supplier.";
+        }
+    }
+
+    private void CloseModal() => showModal = false;
 
     private void NavigateToSupplierDetail(int supplierId)
     {

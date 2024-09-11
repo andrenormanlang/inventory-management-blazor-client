@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace InventoryManagementBlazorClient.Models
+namespace InventoryManagementBlazorClient.Dtos
 {
-    public class Category
+    public class CategoryDto
     {
         public int CategoryId { get; set; }
 
@@ -10,8 +10,6 @@ namespace InventoryManagementBlazorClient.Models
         [StringLength(100, ErrorMessage = "Category name cannot be longer than 100 characters.")]
         [MinLength(3, ErrorMessage = "Category name must be at least 3 characters.")]
         public string Name { get; set; }
-
-        // List of products in this category
-        public List<Product> Products { get; set; } = new List<Product>();
     }
 }
+

@@ -36,10 +36,5 @@ namespace InventoryManagementBlazorClient.Services
         {
             return await _httpClient.DeleteAsync($"category/{categoryId}");
         }
-
-        public async Task<HttpResponseMessage> CreateCategoriesBulkAsync(IEnumerable<Category> categories)
-        {
-            return await _httpClient.PostAsJsonAsync("category/bulk", categories);
-        }
     }
 }
