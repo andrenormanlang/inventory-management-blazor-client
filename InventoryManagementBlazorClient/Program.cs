@@ -7,7 +7,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://inventorymanagementsystem-api.azurewebsites.net/api/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://inventory-management-api-csharp.onrender.com/api/") });
 
 // Register Product, Category, and Supplier services for dependency injection
 builder.Services.AddScoped<ProductService>();
